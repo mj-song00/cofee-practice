@@ -1,5 +1,6 @@
 const express = require('express');
 const postRouter = require('./routes/post');
+const cors = require('cors');
 const app = express();
 
 app.get('/', (req, res, next) => {
