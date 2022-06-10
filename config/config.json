@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "jason1234",
+    "database": "cofee_prac",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "cofee_prac",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "cofee_prac",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
