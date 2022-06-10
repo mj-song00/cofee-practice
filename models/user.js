@@ -6,11 +6,11 @@ module.exports = class User extends Sequelize.Model {
       {
         email: {
           type: Sequelize.STRING(40),
-          allowNull: true,
+          allowNull: false,
           unique: true,
         },
         nickname: {
-          type: Sequelize.STRING(15),
+          type: Sequelize.STRING(30),
           allowNull: false,
         },
         password: {
@@ -33,5 +33,6 @@ module.exports = class User extends Sequelize.Model {
   static associate(db) {
     db.User.hasMany(db.Post);
     db.User.hasMany(db.Comment);
+    db.User.belongsToMany(db.Post, { through: 'Like', as: 'Liked' });
   }
 };

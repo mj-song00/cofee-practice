@@ -1,8 +1,14 @@
 const express = require('express');
 const postRouter = require('./routes/post');
+const db = require('./models');
 const cors = require('cors');
 const app = express();
-
+db.sequelize
+  .sync()
+  .then(() => {
+    console.log('db 연결 성공');
+  })
+  .catch(console.error);
 app.use(cors());
 app.get('/', (req, res, next) => {
   res.send('Hello');
