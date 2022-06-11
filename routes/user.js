@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const joi = require('joi');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
+const crypto = require('crypto');
 
 // validation 조건 설정(현재는 설정X)
 // const postUserSchema = joi.object({
@@ -20,9 +21,10 @@ router.get('/', (req, res) => {
   res.send('접속완료');
 });
 
-// 회원가입 구현 API
+// 회원가입 구현 API(비밀번호 Hashing 완료)
 
 router.post('/signup', async (req, res) => {
+
   const { email, nickname, password, passwordCheck } = req.body;
 
   if (password !== passwordCheck) {
@@ -43,7 +45,9 @@ router.post('/signup', async (req, res) => {
     return;
   }
 
-  await User.create({ email, nickname, password });
+  const passwordCrypted = crypto.createHash('sha512').update(password).digest('base64');
+
+  await User.create({ email, nickname, password: passwordCrypted });
   res.status(201).send({});
 });
 
@@ -54,13 +58,15 @@ router.post('/login', async (req, res) => {
 
   const { email, password } = req.body;
 
+  const passwordCrypted = crypto.createHash('sha512').update(password).digest('base64');
+
   const user = await User.findOne({
     where: {
       email,
     },
   });
 
-  if (!user || password !== user.password) {
+  if (!user || passwordCrypted !== user.password) {
     res.status(400).send({
       errorMessage: '이메일 또는 패스워드가 틀렸습니다.',
     });
