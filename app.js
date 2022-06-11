@@ -23,7 +23,7 @@ app.get('/', (req, res, next) => {
 });
 
 app.use('/api', postRouter);
-app.use('/api', userRouter);
+app.use('/user', userRouter);
 
 app.use((req, res, next) => {
   res.sendStatus(404);
@@ -33,9 +33,6 @@ app.use((error, req, res, next) => {
   console.error(error);
   res.sendStatus(500);
 });
-
-app.use(express.urlencoded());
-app.use(express.json());
 
 app.listen(8000, () => {
   console.log('8000번 서버 실행 중');
