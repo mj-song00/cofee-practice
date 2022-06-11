@@ -29,5 +29,31 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
   }
 })
 
+//댓글삭제
+router.delete('/post/:postId/comment/:commentId', async (req, res) =>{
+  const {postId, commentId} = req.params
+  console.log(postId, commentId)
+
+  try{
+    const existitComment = await Comment.findOne({
+      where : { id: commentId, postId: postId}
+    })
+
+    if (!existitComment) return res.status(400).send()
+
+    await Comment.destroy({
+      where : {
+        id: commentId, postId: postId
+      }
+    })
+    res.status(200).send()
+
+  }catch(error){
+    console.log(error)
+  }
+  
+  
+  
+})
 
 module.exports = router;
