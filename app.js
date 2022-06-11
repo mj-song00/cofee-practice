@@ -2,7 +2,10 @@ const express = require('express');
 const postRouter = require('./routes/post');
 const db = require('./models');
 const cors = require('cors');
+const morgan = require('morgan');
+
 const app = express();
+
 db.sequelize
   .sync()
   .then(() => {
@@ -10,6 +13,9 @@ db.sequelize
   })
   .catch(console.error);
 app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.get('/', (req, res, next) => {
   res.send('Hello');
 });
