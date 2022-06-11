@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "jason1234",
+    "password": "sql_128#",
     "database": "cofee_prac",
     "host": "127.0.0.1",
     "dialect": "mysql"
