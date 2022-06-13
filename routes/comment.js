@@ -1,5 +1,5 @@
 const express = require('express');
-const { Comment } = require('../models');
+const { Comment, User} = require('../models');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth-Middleware');
 
@@ -17,8 +17,11 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
       PostId: postId,
       UserId,
     });
-
-    res.status(201).json({ comment: newComment });
+    const fullComment = await Comment.findOne({
+      where: { id:newComment.id },
+      include: [{ model: User, attributes: ['id', 'nickname'] }],
+    });
+    res.status(201).json({ fullComment });
   } catch (error) {
     console.log(error);
   }
