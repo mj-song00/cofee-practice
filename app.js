@@ -6,6 +6,7 @@ const morgan = require('morgan'); // 터미널에 프론트 요청오면 로그 
 const postRouter = require('./routes/post');
 const userRouter = require('./routes/user');
 const commentRouter = require('./routes/comment')
+const authRouter = require('./routes/auth');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get('/', (req, res, next) => {
 app.use('/api', postRouter);
 app.use('/user', userRouter);
 app.use('/api', commentRouter);
+app.use('/auth', authRouter);
 
 app.use((req, res, next) => {
   res.sendStatus(404);
