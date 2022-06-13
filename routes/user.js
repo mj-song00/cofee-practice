@@ -17,9 +17,9 @@ const crypto = require('crypto');
 
 // 접속 테스트
 
-router.get('/', (req, res) => {
-  res.send('접속완료');
-});
+// router.get('/', (req, res) => {
+//   res.send('접속완료');
+// });
 
 // 회원가입 구현 API(비밀번호 Hashing 완료)
 
@@ -28,7 +28,7 @@ router.post('/signup', async (req, res) => {
   const { email, nickname, password, passwordCheck } = req.body;
 
   if (password !== passwordCheck) {
-    res.status(400).send({ errorMessage: '패스워드가 일치하지 않습니다.' });
+    res.status(400).send({ result: false });
     return;
   }
 
@@ -40,7 +40,7 @@ router.post('/signup', async (req, res) => {
 
   if (existUsers.length) {
     res.status(400).send({
-      errorMessage: '이메일 또는 닉네임이 이미 사용중입니다.',
+      result: false
     });
     return;
   }
@@ -48,7 +48,9 @@ router.post('/signup', async (req, res) => {
   const passwordCrypted = crypto.createHash('sha512').update(password).digest('base64');
 
   await User.create({ email, nickname, password: passwordCrypted });
-  res.status(201).send({});
+  res.status(201).send({
+    result: true
+  });
 });
 
 // 로그인 구현 API
@@ -68,13 +70,61 @@ router.post('/login', async (req, res) => {
 
   if (!user || passwordCrypted !== user.password) {
     res.status(400).send({
-      errorMessage: '이메일 또는 패스워드가 틀렸습니다.',
+      result: false,
+      nickname: '',
+      token: ''
     });
     return;
   }
 
   res.send({
-    token: jwt.sign({ userId: user.id, nickname: user.nickname }, 'customized-secret-key'),
+    result: true,
+    nickname: user.nickname,
+    token: jwt.sign({ userId: user.id, nickname: user.nickname }, 'customized-secret-key')
+  });
+});
+
+// 아이디 중복 검사
+
+router.get('/email/:email', async (req, res) => {
+  const { email } = req.params;
+  console.log(email);
+  const user = await User.findOne({
+    where: {
+      email,
+    },
+  });
+  
+  if (user === null) {
+    res.status(400).send({
+      result: true
+    });
+    return;
+  }
+  res.status(201).send({
+    result: false
+  });
+});
+
+// 닉네임 중복 검사
+
+router.get('/nickname/:nickname', async (req, res) => {
+  const { nickname } = req.params;
+  console.log(nickname);
+  const user = await User.findOne({
+    where: {
+      nickname,
+    },
+  });
+  
+  if (user === null) {
+    res.status(400).send({
+      result: true
+    });
+    return;
+  }
+  res.status(201).send({
+    result: false
   });
 });
 
