@@ -4,9 +4,6 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth-Middleware')
 
 
-router.get('/comment', ( req, res ) => {
-  res.send("확인");
-});
 
 //댓글작성
 router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
@@ -18,10 +15,10 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
     if (content === null ) return res.status(400).send()
 
     const newComment = await Comment.create({
-     content
+     content, PostId:postId
     })
 
-    res.status(201).json({ comment:newComment, postId
+    res.status(201).json({ comment:newComment 
     })
     
   }catch(error ){
@@ -30,23 +27,24 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
 })
 
 //댓글삭제
-router.delete('/post/:postId/comment/:commentId', async (req, res) =>{
+router.delete('/post/:postId/comment/:commentId',authMiddleware, async (req, res) =>{
   const {postId, commentId} = req.params
-  console.log(postId, commentId)
-
+ 
   try{
     const existitComment = await Comment.findOne({
-      where : { id: commentId, postId: postId}
+      where : {  id: commentId }
     })
+    console.log(existitComment)
+   
 
-    if (!existitComment) return res.status(400).send()
+    if (!existitComment) return res.status(400).send({'msg':'잘못된 접근입니다.'})
 
     await Comment.destroy({
       where : {
-        id: commentId, postId: postId
+        id: commentId, postId
       }
     })
-    res.status(200).send()
+    res.status(200).send({ 'msg' : '삭제완료'})
 
   }catch(error){
     console.log(error)
