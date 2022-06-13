@@ -74,7 +74,7 @@ router.post('/login', async (req, res) => {
   }
 
   res.send({
-    token: jwt.sign({ userId: user.id }, 'customized-secret-key'),
+    token: jwt.sign({ userId: user.id, nickname: user.nickname }, 'customized-secret-key'),
   });
 });
 

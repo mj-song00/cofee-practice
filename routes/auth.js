@@ -7,29 +7,33 @@ const User = require('../models/user');
 router.get('/', async (req, res, next) => {
   const { authorization } = req.headers;
   const [authType, authToken] = (authorization || '').split(' ');
-
+  
+  try{
+  const { userId } = jwt.verify(authToken, 'customized-secret-key');
+  const userData = await User.findByPk(userId);
+  
   if (!authToken || authType !== 'Bearer') {
     res.status(401).send({
-      errorMessage: '로그인 후 이용 가능한 기능입니다.',
+      nickname: '', result: false
+    });
+    return;
+  }
+  
+  if (!userData.dataValues.id) {
+    res.status(401).send({
+      nickname: '', result: false
     });
     return;
   }
 
-  const { userId } = jwt.verify(authToken, 'customized-secret-key');
-  const userData = await User.findByPk(userId);
-
-  console.log(userData.dataValues.id);
-
-  if (!userData.dataValues.id) {
-    res.status(401).send({
-      status: false
-    });
-  }
-
   res.status(201).send({
-    status: true
+    nickname: userData.dataValues.nickname, result: true
   })
-
+  } catch {
+    res.status(401).send({
+      nickname: '', result: false
+    });
+  } 
 });
 
 module.exports = router;
