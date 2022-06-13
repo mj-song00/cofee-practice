@@ -1,5 +1,5 @@
 const express = require('express');
-const { User, Post } = require('../models');
+const { User, Post, Comment } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
 
@@ -8,7 +8,14 @@ router.get('/posts', async (req, res, next) => {
   try {
     const posts = await Post.findAll({
       order: [['createdAt', 'DESC']],
-      include: [{ model: User, attributes: ['id', 'nickname'] }],
+      include: [
+        { model: User, attributes: ['id', 'nickname'] },
+        {
+          model: Comment,
+          attributes: ['comment', 'createdAt', 'updatedAt'],
+          include: [{ model: User, attributes: ['id', 'nickname'] }],
+        },
+      ],
     });
     res.status(200).json(posts);
   } catch (error) {
@@ -23,7 +30,11 @@ router.post('/post', authMiddleware, async (req, res, next) => {
   const UserId = res.locals.user.id;
   try {
     const post = await Post.create({ title, img, content, UserId });
-    res.status(201).json(post);
+    const fullPost = await Post.findOne({
+      where: { id: post.id },
+      include: [{ model: User, attributes: ['id', 'nickname'] }],
+    });
+    res.status(201).json(fullPost);
   } catch (error) {
     console.error(error);
     next(error);
@@ -42,7 +53,12 @@ router.get('/post/:id', async (req, res, next) => {
         },
       ],
     });
-    res.status(201).json(post);
+    const comment = await Comment.findAll({
+      where: { PostId: Number(req.params.id) },
+      order: [['createdAt', 'DESC']],
+      include: [{ model: User, attributes: ['id', 'nickname'] }],
+    });
+    res.status(201).json(comment);
   } catch (error) {
     console.error(error);
     next(error);
@@ -66,7 +82,14 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
       },
       { where: { id: Number(req.params.id) } }
     );
-    res.status(201).json({ PostId: Number(req.params.id) });
+    const fullPost = await Post.findOne({
+      where: { id: Number(req.params.id) },
+      include: [{ model: User, attributes: ['id', 'nickname'] }],
+    });
+    const commentNum = await Comment.findAll({
+      where: { PostId: Number(req.params.id) },
+    });
+    res.status(201).json(fullPost);
   } catch (error) {
     console.error(error);
     next(error);

@@ -4,7 +4,7 @@ module.exports = class Comment extends Sequelize.Model {
   static init(sequelize) {
     return super.init(
       {
-        content: {
+        comment: {
           type: Sequelize.TEXT,
           allowNull: false,
         },
