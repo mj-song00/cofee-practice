@@ -15,6 +15,7 @@ router.get('/posts', async (req, res, next) => {
           attributes: ['comment', 'createdAt', 'updatedAt'],
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     res.status(200).json(posts);
@@ -30,7 +31,7 @@ router.post('/post', authMiddleware, async (req, res, next) => {
   const UserId = res.locals.user.id;
   try {
     const post = await Post.create({ title, img, content, UserId });
-    console.log(post)
+    console.log(post);
     const fullPost = await Post.findOne({
       where: { id: post.id },
       include: [
@@ -136,7 +137,7 @@ router.patch('/post/:id/like', authMiddleware, async (req, res, next) => {
       return res.status(403).send('게시글이 존재하지 않습니다.');
     }
     await post.addLikers(user.id);
-    res.json({ PostId: post.id, UserId: user.id });
+    res.json({ PostId: post.id, nickname: user.nickname });
   } catch (error) {
     console.error(error);
     next(error);
@@ -153,7 +154,7 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
       return res.status(403).send('게시글이 존재하지 않습니다.');
     }
     await post.removeLikers(user.id);
-    res.json({ PostId: post.id, UserId: user.id });
+    res.json({ PostId: post.id, nickname: user.nickname });
   } catch (error) {
     console.error(error);
     next(error);

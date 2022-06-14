@@ -11,7 +11,13 @@ const sequelize = new Sequelize(
   config.database,
   config.username,
   config.password,
-  config
+  {
+    host: '127.0.0.1',
+    dialect: 'mysql',
+    timezone: '+09:00',
+    dialectOptions: { charset: 'utf8mb4', dateStrings: true, typeCast: true },
+    timezone: '+09:00',
+  }
 );
 
 db.sequelize = sequelize;
