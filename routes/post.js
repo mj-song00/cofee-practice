@@ -30,6 +30,7 @@ router.post('/post', authMiddleware, async (req, res, next) => {
   const UserId = res.locals.user.id;
   try {
     const post = await Post.create({ title, img, content, UserId });
+    console.log(post)
     const fullPost = await Post.findOne({
       where: { id: post.id },
       include: [

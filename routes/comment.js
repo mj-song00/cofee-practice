@@ -56,4 +56,36 @@ router.delete(
   }
 );
 
+
+//댓글 수정
+router.put('/post/:postId/comment/:commentId', authMiddleware, async (req, res, next) => {
+  const comment = await Comment.findOne({ where: { id: Number(req.params.commentId) } });
+  const user = res.locals.user;
+  console.log(comment)
+  if (comment.UserId !== user.id) {
+    return res.status(401).json({ message: '작성자만 수정할 수 있습니다.' });
+  }
+  try {
+    await Comment.update(
+      {
+        comment : req.body.comment
+      },
+      { where: { id: Number(req.params.commentId) } }
+    );
+    
+    const fullComment = await Comment.findOne({
+      where: { id: Number(req.params.commentId) },
+      include: [
+        { model: User, attributes: ['id', 'nickname'] },
+      ],
+    });
+    const commentNum = await Comment.findAll({
+      where: { PostId: Number(req.params.commentId) },
+    });
+    res.status(201).json(fullComment);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
 module.exports = router;
