@@ -32,7 +32,12 @@ router.post('/post', authMiddleware, async (req, res, next) => {
     const post = await Post.create({ title, img, content, UserId });
     const fullPost = await Post.findOne({
       where: { id: post.id },
-      include: [{ model: User, attributes: ['id', 'nickname'] }],
+      include: [
+        { model: User, attributes: ['id', 'nickname'] },
+        {
+          model: Comment,
+        },
+      ],
     });
     res.status(201).json(fullPost);
   } catch (error) {
@@ -84,7 +89,14 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
     );
     const fullPost = await Post.findOne({
       where: { id: Number(req.params.id) },
-      include: [{ model: User, attributes: ['id', 'nickname'] }],
+      include: [
+        { model: User, attributes: ['id', 'nickname'] },
+        {
+          model: Comment,
+          attributes: ['comment', 'createdAt', 'updatedAt'],
+          include: [{ model: User, attributes: ['id', 'nickname'] }],
+        },
+      ],
     });
     const commentNum = await Comment.findAll({
       where: { PostId: Number(req.params.id) },
@@ -108,6 +120,39 @@ router.delete('/post/:id', authMiddleware, async (req, res, next) => {
       where: { id: Number(req.params.id) },
     });
     res.json({ PostId: Number(req.params.id) });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// 좋아요 추가
+router.patch('/post/:id/like', authMiddleware, async (req, res, next) => {
+  const user = res.locals.user;
+  try {
+    const post = await Post.findOne({ where: { id: Number(req.params.id) } });
+    if (!post) {
+      return res.status(403).send('게시글이 존재하지 않습니다.');
+    }
+    await post.addLikers(user.id);
+    res.json({ PostId: post.id, UserId: user.id });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// 좋아요 삭제
+router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
+  const user = res.locals.user;
+
+  try {
+    const post = await Post.findOne({ where: { id: Number(req.params.id) } });
+    if (!post) {
+      return res.status(403).send('게시글이 존재하지 않습니다.');
+    }
+    await post.removeLikers(user.id);
+    res.json({ PostId: post.id, UserId: user.id });
   } catch (error) {
     console.error(error);
     next(error);
