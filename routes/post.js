@@ -39,6 +39,7 @@ router.post('/post', authMiddleware, async (req, res, next) => {
         {
           model: Comment,
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     res.status(201).json(fullPost);
@@ -93,6 +94,7 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
           attributes: ['comment', 'createdAt', 'updatedAt'],
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     const commentNum = await Comment.findAll({
