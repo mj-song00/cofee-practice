@@ -3,7 +3,7 @@ const { User, Post, Comment } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
 const { Sequelize } = require('sequelize');
-const { like } = Sequelize.Op;
+const { like, or } = Sequelize.Op;
 
 // 전체게시글 조회
 router.get('/posts', async (req, res, next) => {
@@ -166,16 +166,25 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
 //게시물 검색
   router.get('/title', async (req, res, next) => {
     const searchWord = req.query.title //쿼리로 가져오기
-    console.log(searchWord)
+    console.log(req.query)
     if(!searchWord){ // 빈값이면
-      return res.status(400).json('검색어를 입력하세요') 
+      return res.status(400).json({'msg':'검색어를 입력하세요'}) 
     }
 
     let searchRsult = await Post.findAll({
       where : {
-        title: {
-              [like] : `%${searchWord}%` 
+        [or] : [ 
+          {
+            title: {
+                  [like] : `%${searchWord}%` 
+            },
+        },
+        {
+          content: {
+            [like] : `%${searchWord}%` 
+          }
         }
+      ]
       }
     })
 
@@ -186,7 +195,7 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
         console.log(error)
       }
     }else {
-      res.send({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
+      return res.status(400).json({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
     }
     
   })
