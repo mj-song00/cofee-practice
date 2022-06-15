@@ -179,14 +179,14 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
       }
     })
 
-    if (searchWord.length != 0 ) {
+    if (searchRsult.length != 0 ) {
       try {
         res.status(201).json(searchRsult)
       }catch(error){
         console.log(error)
       }
     }else {
-      res.send({'msg' : `${searchWord}에 대한 값이 없습니다.` })
+      res.send({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
     }
     
   })
