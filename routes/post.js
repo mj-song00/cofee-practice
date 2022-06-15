@@ -53,19 +53,14 @@ router.get('/post/:id', async (req, res, next) => {
   try {
     const post = await Post.findOne({
       where: { id: Number(req.params.id) },
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'nickname'],
-        },
-      ],
+      include: [{ model: User, as: 'Likers', attributes: ['id', 'nickname'] }],
     });
     const comment = await Comment.findAll({
       where: { PostId: Number(req.params.id) },
       order: [['createdAt', 'DESC']],
       include: [{ model: User, attributes: ['id', 'nickname'] }],
     });
-    res.status(201).json(comment);
+    res.status(201).json({ comment, Likers: post.Likers });
   } catch (error) {
     console.error(error);
     next(error);
