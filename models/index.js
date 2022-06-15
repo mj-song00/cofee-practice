@@ -5,13 +5,21 @@ const User = require('./user');
 const Post = require('./post');
 const Comment = require('./comment');
 
+
 const db = {};
 
 const sequelize = new Sequelize(
   config.database,
   config.username,
   config.password,
-  config
+  
+  { 
+    host: "127.0.0.1",
+    dialect : "mysql", 
+    timezone :"+09:00",
+    dialectOptions: {charset: "utf8mb4", dateStrings: true, typeCast: true },
+    
+  }
 );
 
 db.sequelize = sequelize;
