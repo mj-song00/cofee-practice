@@ -1,5 +1,5 @@
 const express = require('express');
-const { Comment, User} = require('../models');
+const { Comment, User, Noti } = require('../models');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth-Middleware');
 
@@ -8,6 +8,7 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
   const { comment } = req.body;
   const { postId } = req.params;
   const UserId = res.locals.user.id;
+  const user = res.locals.user;
   console.log(UserId);
   try {
     if (comment === null) return res.status(400).send();
@@ -17,8 +18,16 @@ router.post('/post/:postId/comment', authMiddleware, async (req, res) => {
       PostId: postId,
       UserId,
     });
+
+    await Noti.create({
+      PostId: postId,
+      state: false,
+      commentUser: user.nickname,
+      type: 'comment',
+    });
+
     const fullComment = await Comment.findOne({
-      where: { id:newComment.id },
+      where: { id: newComment.id },
       include: [{ model: User, attributes: ['id', 'nickname'] }],
     });
     res.status(201).json({ fullComment });
@@ -56,36 +65,39 @@ router.delete(
   }
 );
 
-
 //댓글 수정
-router.put('/post/:postId/comment/:commentId', authMiddleware, async (req, res, next) => {
-  const comment = await Comment.findOne({ where: { id: Number(req.params.commentId) } });
-  const user = res.locals.user;
-  console.log(comment)
-  if (comment.UserId !== user.id) {
-    return res.status(401).json({ message: '작성자만 수정할 수 있습니다.' });
-  }
-  try {
-    await Comment.update(
-      {
-        comment : req.body.comment
-      },
-      { where: { id: Number(req.params.commentId) } }
-    );
-    
-    const fullComment = await Comment.findOne({
+router.put(
+  '/post/:postId/comment/:commentId',
+  authMiddleware,
+  async (req, res, next) => {
+    const comment = await Comment.findOne({
       where: { id: Number(req.params.commentId) },
-      include: [
-        { model: User, attributes: ['id', 'nickname'] },
-      ],
     });
-    const commentNum = await Comment.findAll({
-      where: { PostId: Number(req.params.commentId) },
-    });
-    res.status(201).json(fullComment);
-  } catch (error) {
-    console.error(error);
-    next(error);
+    const user = res.locals.user;
+    console.log(comment);
+    if (comment.UserId !== user.id) {
+      return res.status(401).json({ message: '작성자만 수정할 수 있습니다.' });
+    }
+    try {
+      await Comment.update(
+        {
+          comment: req.body.comment,
+        },
+        { where: { id: Number(req.params.commentId) } }
+      );
+
+      const fullComment = await Comment.findOne({
+        where: { id: Number(req.params.commentId) },
+        include: [{ model: User, attributes: ['id', 'nickname'] }],
+      });
+      const commentNum = await Comment.findAll({
+        where: { PostId: Number(req.params.commentId) },
+      });
+      res.status(201).json(fullComment);
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
   }
-});
+);
 module.exports = router;

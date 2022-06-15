@@ -4,6 +4,7 @@ const config = require('../config/config.json')[env];
 const User = require('./user');
 const Post = require('./post');
 const Comment = require('./comment');
+const Noti = require('./noti');
 
 const db = {};
 
@@ -24,13 +25,16 @@ db.sequelize = sequelize;
 db.User = User;
 db.Post = Post;
 db.Comment = Comment;
+db.Noti = Noti;
 
 User.init(sequelize);
 Post.init(sequelize);
 Comment.init(sequelize);
+Noti.init(sequelize);
 
 User.associate(db);
 Post.associate(db);
 Comment.associate(db);
+Noti.associate(db);
 
 module.exports = db;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { User, Post, Comment } = require('../models');
+const { User, Post, Comment, Noti } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
 
@@ -133,6 +133,12 @@ router.patch('/post/:id/like', authMiddleware, async (req, res, next) => {
     if (!post) {
       return res.status(403).send('게시글이 존재하지 않습니다.');
     }
+    await Noti.create({
+      PostId: req.params.id,
+      state: false,
+      likeUser: user.nickname,
+      type: 'like',
+    });
     await post.addLikers(user.id);
     res.json({ PostId: post.id, nickname: user.nickname });
   } catch (error) {
@@ -156,5 +162,23 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
     console.error(error);
     next(error);
   }
+});
+
+// 알람 기능
+router.get('/alarm', authMiddleware, async (req, res, next) => {
+  const user = res.locals.user;
+  const post = await Post.findAll({
+    attributes: ['id'],
+    where: { userId: user.id },
+  });
+
+  const postId = post.map((v) => v.id);
+
+  const alarm = await Noti.findAll({
+    where: { PostId: postId },
+    attributes: ['state', 'commentUser', 'likeUser', 'type', 'PostId'],
+  });
+
+  res.json({ nickname: user.nickname, alarm });
 });
 module.exports = router;
