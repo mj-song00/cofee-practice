@@ -1,4 +1,6 @@
 const express = require('express');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const { User, Post, Comment, Noti } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
@@ -184,38 +186,40 @@ router.get('/alarm', authMiddleware, async (req, res, next) => {
 
 //게시물 검색
 router.get('/title', async (req, res, next) => {
-  const searchWord = req.query.title //쿼리로 가져오기
-  console.log(req.query)
-  if(!searchWord){ // 검색어가 없으면
-    return res.status(400).json({'msg':'검색어를 입력하세요'}) 
+  const searchWord = req.query.title; //쿼리로 가져오기
+  console.log(req.query);
+  if (!searchWord) {
+    // 검색어가 없으면
+    return res.status(400).json({ msg: '검색어를 입력하세요' });
   }
 
   let searchRsult = await Post.findAll({
-    where : {
-      [or] : [ 
+    where: {
+      [Op.or]: [
         {
           title: {
-                [like] : `%${searchWord}%` 
+            [Op.like]: `%${searchWord}%`,
           },
-      },
-      {
-        content: {
-          [like] : `%${searchWord}%` 
-        }
-      }
-    ]
-    }
-  })
+        },
+        {
+          content: {
+            [Op.like]: `%${searchWord}%`,
+          },
+        },
+      ],
+    },
+  });
 
-  if (searchRsult.length != 0 ) {
+  if (searchRsult.length != 0) {
     try {
-      res.status(201).json(searchRsult)
-    }catch(error){
-      console.log(error)
+      res.status(201).json(searchRsult);
+    } catch (error) {
+      console.log(error);
     }
-  }else {
-    return res.status(400).json({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
+  } else {
+    return res
+      .status(400)
+      .json({ msg: `${searchWord}에 대한 검색 값이 없습니다.` });
   }
-  
-})
+});
 module.exports = router;
