@@ -167,7 +167,7 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
   router.get('/title', async (req, res, next) => {
     const searchWord = req.query.title //쿼리로 가져오기
     console.log(req.query)
-    if(!searchWord){ // 빈값이면
+    if(!searchWord){ // 검색어가 없으면
       return res.status(400).json({'msg':'검색어를 입력하세요'}) 
     }
 
