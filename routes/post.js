@@ -169,19 +169,48 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
 // 알람 기능
 router.get('/alarm', authMiddleware, async (req, res, next) => {
   const user = res.locals.user;
-  const post = await Post.findAll({
-    attributes: ['id'],
-    where: { userId: user.id },
-  });
+  try {
+    const post = await Post.findAll({
+      attributes: ['id'],
+      where: { userId: user.id },
+    });
 
-  const postId = post.map((v) => v.id);
+    const postId = post.map((v) => v.id);
 
-  const alarm = await Noti.findAll({
-    where: { PostId: postId },
-    attributes: ['state', 'commentUser', 'likeUser', 'type', 'PostId'],
-  });
+    const alarm = await Noti.findAll({
+      where: { PostId: postId },
+      attributes: ['state', 'commentUser', 'likeUser', 'type', 'PostId'],
+    });
 
-  res.json({ nickname: user.nickname, alarm });
+    res.json({ nickname: user.nickname, alarm });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// 알람 읽음 처리
+router.put('/alarm', authMiddleware, async (req, res, next) => {
+  const user = res.locals.user;
+  try {
+    const post = await Post.findAll({
+      attributes: ['id'],
+      where: { userId: user.id },
+    });
+    const postId = post.map((v) => v.id);
+
+    await Noti.update(
+      { state: true },
+      {
+        where: { PostId: postId },
+      }
+    );
+
+    res.json({ message: 'state 변경 완료' });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
 });
 
 //게시물 검색
