@@ -1,7 +1,7 @@
 const express = require('express');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const { User, Post, Comment, Noti } = require('../models');
+const { User, Post, Comment, Noti, Hashtag } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
 const { Sequelize } = require('sequelize');
@@ -20,6 +20,10 @@ router.get('/posts', async (req, res, next) => {
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
         { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
+        {
+          model: Hashtag,
+          attributes: ['hash'],
+        },
       ],
     });
     res.status(200).json(posts);
@@ -31,10 +35,11 @@ router.get('/posts', async (req, res, next) => {
 
 // 게시글 작성
 router.post('/post', authMiddleware, async (req, res, next) => {
-  const { title, img, content } = req.body;
+  const { title, img, content, hash } = req.body;
   const UserId = res.locals.user.id;
   try {
     const post = await Post.create({ title, img, content, UserId });
+    await Hashtag.create({ hash, PostId: post.id });
     console.log(post);
     const fullPost = await Post.findOne({
       where: { id: post.id },
@@ -44,6 +49,10 @@ router.post('/post', authMiddleware, async (req, res, next) => {
           model: Comment,
         },
         { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
+        {
+          model: Hashtag,
+          attributes: ['hash'],
+        },
       ],
     });
     res.status(201).json(fullPost);
@@ -89,6 +98,10 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
       },
       { where: { id: Number(req.params.id) } }
     );
+    await Hashtag.update(
+      { hash: req.body.hash },
+      { where: { PostId: post.id } }
+    );
     const fullPost = await Post.findOne({
       where: { id: Number(req.params.id) },
       include: [
@@ -99,6 +112,10 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
         { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
+        {
+          model: Hashtag,
+          attributes: ['hash'],
+        },
       ],
     });
     const commentNum = await Comment.findAll({
@@ -239,6 +256,13 @@ router.get('/title', async (req, res, next) => {
         },
       ],
     },
+    include: [
+      { model: User, attributes: ['id', 'nickname'] },
+      {
+        model: Comment,
+      },
+      { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
+    ],
   });
 
   if (searchRsult.length != 0) {
