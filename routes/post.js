@@ -181,4 +181,41 @@ router.get('/alarm', authMiddleware, async (req, res, next) => {
 
   res.json({ nickname: user.nickname, alarm });
 });
+
+//게시물 검색
+router.get('/title', async (req, res, next) => {
+  const searchWord = req.query.title //쿼리로 가져오기
+  console.log(req.query)
+  if(!searchWord){ // 검색어가 없으면
+    return res.status(400).json({'msg':'검색어를 입력하세요'}) 
+  }
+
+  let searchRsult = await Post.findAll({
+    where : {
+      [or] : [ 
+        {
+          title: {
+                [like] : `%${searchWord}%` 
+          },
+      },
+      {
+        content: {
+          [like] : `%${searchWord}%` 
+        }
+      }
+    ]
+    }
+  })
+
+  if (searchRsult.length != 0 ) {
+    try {
+      res.status(201).json(searchRsult)
+    }catch(error){
+      console.log(error)
+    }
+  }else {
+    return res.status(400).json({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
+  }
+  
+})
 module.exports = router;
