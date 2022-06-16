@@ -96,6 +96,10 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
       },
       { where: { id: Number(req.params.id) } }
     );
+    await Hashtag.update(
+      { hash: req.body.hash },
+      { where: { PostId: post.id } }
+    );
     const fullPost = await Post.findOne({
       where: { id: Number(req.params.id) },
       include: [
