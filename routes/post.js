@@ -1,5 +1,5 @@
 const express = require('express');
-const { User, Post, Comment } = require('../models');
+const { User, Post, Comment, Noti } = require('../models');
 const authMiddleware = require('../middleware/auth-Middleware');
 const router = express.Router();
 const { Sequelize } = require('sequelize');
@@ -17,6 +17,7 @@ router.get('/posts', async (req, res, next) => {
           attributes: ['comment', 'createdAt', 'updatedAt'],
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     res.status(200).json(posts);
@@ -32,7 +33,7 @@ router.post('/post', authMiddleware, async (req, res, next) => {
   const UserId = res.locals.user.id;
   try {
     const post = await Post.create({ title, img, content, UserId });
-    console.log(post)
+    console.log(post);
     const fullPost = await Post.findOne({
       where: { id: post.id },
       include: [
@@ -40,6 +41,7 @@ router.post('/post', authMiddleware, async (req, res, next) => {
         {
           model: Comment,
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     res.status(201).json(fullPost);
@@ -54,19 +56,14 @@ router.get('/post/:id', async (req, res, next) => {
   try {
     const post = await Post.findOne({
       where: { id: Number(req.params.id) },
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'nickname'],
-        },
-      ],
+      include: [{ model: User, as: 'Likers', attributes: ['id', 'nickname'] }],
     });
     const comment = await Comment.findAll({
       where: { PostId: Number(req.params.id) },
       order: [['createdAt', 'DESC']],
       include: [{ model: User, attributes: ['id', 'nickname'] }],
     });
-    res.status(201).json(comment);
+    res.status(201).json({ comment, Likers: post.Likers });
   } catch (error) {
     console.error(error);
     next(error);
@@ -99,6 +96,7 @@ router.put('/post/:id', authMiddleware, async (req, res, next) => {
           attributes: ['comment', 'createdAt', 'updatedAt'],
           include: [{ model: User, attributes: ['id', 'nickname'] }],
         },
+        { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
       ],
     });
     const commentNum = await Comment.findAll({
@@ -137,8 +135,14 @@ router.patch('/post/:id/like', authMiddleware, async (req, res, next) => {
     if (!post) {
       return res.status(403).send('게시글이 존재하지 않습니다.');
     }
+    await Noti.create({
+      PostId: req.params.id,
+      state: false,
+      likeUser: user.nickname,
+      type: 'like',
+    });
     await post.addLikers(user.id);
-    res.json({ PostId: post.id, UserId: user.id });
+    res.json({ PostId: post.id, nickname: user.nickname });
   } catch (error) {
     console.error(error);
     next(error);
@@ -155,134 +159,65 @@ router.delete('/post/:id/like', authMiddleware, async (req, res, next) => {
       return res.status(403).send('게시글이 존재하지 않습니다.');
     }
     await post.removeLikers(user.id);
-    res.json({ PostId: post.id, UserId: user.id });
+    res.json({ PostId: post.id, nickname: user.nickname });
   } catch (error) {
     console.error(error);
     next(error);
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 알람 기능
+router.get('/alarm', authMiddleware, async (req, res, next) => {
+  const user = res.locals.user;
+  const post = await Post.findAll({
+    attributes: ['id'],
+    where: { userId: user.id },
+  });
+
+  const postId = post.map((v) => v.id);
+
+  const alarm = await Noti.findAll({
+    where: { PostId: postId },
+    attributes: ['state', 'commentUser', 'likeUser', 'type', 'PostId'],
+  });
+
+  res.json({ nickname: user.nickname, alarm });
+});
 
 //게시물 검색
-  router.get('/title', async (req, res, next) => {
-    const searchWord = req.query.title //쿼리로 가져오기
-    console.log(req.query)
-    if(!searchWord){ // 검색어가 없으면
-      return res.status(400).json({'msg':'검색어를 입력하세요'}) 
-    }
+router.get('/title', async (req, res, next) => {
+  const searchWord = req.query.title //쿼리로 가져오기
+  console.log(req.query)
+  if(!searchWord){ // 검색어가 없으면
+    return res.status(400).json({'msg':'검색어를 입력하세요'}) 
+  }
 
-    let searchRsult = await Post.findAll({
-      where : {
-        [or] : [ 
-          {
-            title: {
-                  [like] : `%${searchWord}%` 
-            },
-        },
+  let searchRsult = await Post.findAll({
+    where : {
+      [or] : [ 
         {
-          content: {
-            [like] : `%${searchWord}%` 
-          }
+          title: {
+                [like] : `%${searchWord}%` 
+          },
+      },
+      {
+        content: {
+          [like] : `%${searchWord}%` 
         }
-      ]
       }
-    })
-
-    if (searchRsult.length != 0 ) {
-      try {
-        res.status(201).json(searchRsult)
-      }catch(error){
-        console.log(error)
-      }
-    }else {
-      return res.status(400).json({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
+    ]
     }
-    
   })
+
+  if (searchRsult.length != 0 ) {
+    try {
+      res.status(201).json(searchRsult)
+    }catch(error){
+      console.log(error)
+    }
+  }else {
+    return res.status(400).json({'msg' : `${searchWord}에 대한 검색 값이 없습니다.` })
+  }
+  
+})
 module.exports = router;
