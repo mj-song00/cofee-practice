@@ -237,6 +237,13 @@ router.get('/title', async (req, res, next) => {
         },
       ],
     },
+    include: [
+      { model: User, attributes: ['id', 'nickname'] },
+      {
+        model: Comment,
+      },
+      { model: User, as: 'Likers', attributes: ['id', 'nickname'] },
+    ],
   });
 
   if (searchRsult.length != 0) {
